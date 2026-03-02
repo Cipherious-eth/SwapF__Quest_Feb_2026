@@ -22,9 +22,11 @@ It is an algorithm propose by the Elon Musk;
 5. Automate
 
 ## Quotes and Mindset
- **Consumption is only useful insofar as it enables you to produce**
+ **$Consumption is only useful insofar as it enables you to produce_{-Justin Skycak}$**
  
- **You don't need 100% knowledge of something before taking actions on it**
+ **You don't need 100% knowledge of something before taking actions on it**  
+ **$Difficult is nothing , you just lack pre-requisites_{-Justin Skycak}$**    
+ **$You have retained information  if and only if you can generate it from memory_{-Justin Skycak}$**
 
  
    
