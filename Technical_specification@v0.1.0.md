@@ -50,21 +50,36 @@
   
 
 ## 4. State Transitions(Functions)
-  - `swap(amount0Out, amount1Out):`
+  - `swap(amount0Out, amount1Out, to, data):`
 
     **Pre-condition**
-    - `amount0Out`  > 0  
-    - `amount1Out` > 0  
-    - 
+    - `amount0Out`  > 0  ||  `amount1Out` > 0  
+    - `_reserve0` > 0
+    - `_reserve1` > 0
   
-    **Logic**
-    1. get th
+    **Logic**  
+    1. (`_reserve0`,`_reserve1`) = `getReserves()`
+    2. `balance0` and `balance1`
+    3. { 
+         1. `_token0` = `token0`
+         2. `_token1`  = `token1`
+         3. IF (`amount0Out` > 0 ) `IERC20(_token0).safeTransfer(to, amount0Out)`  
+         4. IF (`amount1Out` > 0 ) `IERC20(_token1).safeTransfer(to, amount1Out`  
+         5. IF (`data` > 0)  `IuniswapV2Callee(to).uniswapVCall(msg.sender,amount0Out,amount1Out,data)`  
+         6. `balance0` = `IERC20(_token0).balanceOf(address(this))`
+         7. `balance1` = `IERC20(_token1).balanceOf(address(this))`
+       }
+    4. `amount0In` = `balance0` > `_reserve0` - `amount0Out` ? `balance0` - (`_reserve0` - `amount0Out`)  : 0   
+    5. `amount1In` = `balance1` > `_reserve1` - `amount1Out` ? `balance1` - (`_reserve1` - `amount1Out`)  : 0  
+    6. 
+
+    
    
 
 
   - **`getAmountOut(amountIn, reserveIn, reserveOut)`:**   
       *Pre-condition*  
-       - `amountIn` > 0 , `reserveIn` > 0 and `reserveOut` >  0  
+       - `amountIn` > 0 , `reserveIn` > 0 && `reserveOut` >  0  
 
       *Logic*  
        1. `amountInWithFee` = (`amountIn` * `FEE_PRECISION_NUMERATOR`) / `FEE_PRECISION_DENOMINATOR`  
@@ -76,7 +91,7 @@
        - Return value  < `reserveOut`  
        - It must not modify state.
 
-  - **`updateReserves(newReserve0,newReserve1)`:**  
+  - **`update(newReserve0,newReserve1)`:**  
       *Pre-condition*
        - `newReserve0` <  $2^{112}$ - 1  
        - `newReserve1` <  $2^{112}$ - 1  
@@ -113,7 +128,7 @@
   
 ## 5. Hazard Analysis(Prohibited States)
  - Never round shares calculation in favour of the user.
- - Uses should not be able to add only one of the pool tokens as liquidity provision
+ - User should not be able to add only one of the pool tokens as liquidity provision
  - The system 
 
 
