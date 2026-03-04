@@ -35,11 +35,13 @@
   - `uint256 private _totalsupply`
   - `mapping(address account => uint256 userBalance) private _balances`
   - `mapping(address account => mapping(address spender => uint256)) private _allowances`
-  - `address public token0`
-  - `address public token1`
+  - `address public s_token0`
+  - `address public s_token1`
   - `uint256 private constant FEE_PRECISION_NUMERATOR` = 997 
   - `uint256 private constant FEE_PRECISION_DENOMINATOR` = 1000
-
+  - `uint256 private s_price0CummulativeLast`  
+  - `uint256 private s_price1CummulativeLast`
+  - `uint256 private s_blockTimestampLast`
 
 ## 3. Formal Properties(Invariants)
   - The total liquidity,__K__ after a swap should be greater than or equal to  the __K__ before a swap :
@@ -61,8 +63,8 @@
     1. (`_reserve0`,`_reserve1`) = `getReserves()`
     2. `balance0` and `balance1`
     3. { 
-         1. `_token0` = `token0`
-         2. `_token1`  = `token1`
+         1. `_token0` = `s_token0`
+         2. `_token1`  = `s_token1`
          3. IF (`amount0Out` > 0 ) `IERC20(_token0).safeTransfer(to, amount0Out)`  
          4. IF (`amount1Out` > 0 ) `IERC20(_token1).safeTransfer(to, amount1Out`  
          5. IF (`data` > 0)  `IuniswapV2Callee(to).uniswapVCall(msg.sender,amount0Out,amount1Out,data)`  
@@ -71,7 +73,15 @@
        }
     4. `amount0In` = `balance0` > `_reserve0` - `amount0Out` ? `balance0` - (`_reserve0` - `amount0Out`)  : 0   
     5. `amount1In` = `balance1` > `_reserve1` - `amount1Out` ? `balance1` - (`_reserve1` - `amount1Out`)  : 0  
-    6. 
+    6. {
+       1. `balance0Ajusted` = (`balance0` * 1000) - (3 * `amount0In`)  
+       2. `balance1Adjusted` = ( `balance1` * 1000) - (3 * `amount1In`)  
+       3. Assert (`balance0Adjusted` * `balance1Adjusted`) >= (`1_000_000` * `_reserve0` * `_reserve1`)  
+       }  
+    7. `_update(balance0, balance1, _reserve0, _reserve1)`
+
+    **Post-Condition**  
+
 
     
    
@@ -91,16 +101,20 @@
        - Return value  < `reserveOut`  
        - It must not modify state.
 
-  - **`update(newReserve0,newReserve1)`:**  
+  - **`_update(balance0, balance1, _reserve0,_reserve1)`:**  
       *Pre-condition*
-       - `newReserve0` <  $2^{112}$ - 1  
-       - `newReserve1` <  $2^{112}$ - 1  
+       - `balance0` <  $2^{112}$ - 1  
+       - `balance1` <  $2^{112}$ - 1  
        - It must be an internal function  
   
-      *Logic*  
-       1. `s_reserve0` = `newReserve0`   
-       2. `s_reserve1` = `newReserve1`  
-       3. emit  `ReservesUpdated(newReserve0, newReserve1)`   
+      *Logic* 
+       1. `blockTimestamp` = block.timestamp % 2**32  
+       2. `timeElapsed` = `blockTimeStamp` - `s_blockTimestampLast`  
+       3. IF timeElapsed > 0 && _reserve0 !=0 && _reserve1 != 0       `s_price0CummulativeLast` += (`_reserve1` * `timeElapsed`)/ `_reserve0`
+        `s_price1CummulativeLast` += (`_reserve0` * `timeElapsed`)/ `reserve1`
+       4.  `s_reserve0` = `balance0`   
+       5.  `s_reserve1` = `balance1` 
+        emit  `Sync(s_reserve0, s_reserve1)`   
     
       *Post-condition*  
 
